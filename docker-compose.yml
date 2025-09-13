@@ -1,26 +1,23 @@
-version: '2.4'
+version: '3.8'
 
 services:
   db:
     container_name: "wp-mysql"
     image: mariadb:10
-    healthcheck:
-      test: mysqladmin -uwp_user -pwp_pass ping -h 127.0.0.1
-    volumes:
-      - database:/var/lib/mysql
-      - ${PWD}/dump:/docker-entrypoint-initdb.d
-    restart: unless-stopped
-    environment: # the mysql user is 'root'
+    environment:
       MYSQL_ROOT_PASSWORD: pass
       MYSQL_DATABASE: wp_wordpress
       MYSQL_USER: wp_user
       MYSQL_PASSWORD: wp_pass
+    volumes:
+      - database:/var/lib/mysql
+      - ./dump:/docker-entrypoint-initdb.d
+    restart: unless-stopped
 
   wordpress:
     container_name: "wp-site"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     image: fsg/wordpress
     build:
       context: .
@@ -29,19 +26,33 @@ services:
         user_id: ${UID:-1000}
     volumes:
       - wordpress:/var/www/html
-      - ${THEMES_DIR:-./wp-content/themes}:/var/www/html/wp-content/themes
-      - ${PLUGINS_DIR:-./wp-content/plugins}:/var/www/html/wp-content/plugins
-      - ${UPLOADS_DIR:-./wp-content/uploads}:/var/www/html/wp-content/uploads
-    ports:
-      - "8000:80"
+      - ./wp-content/themes:/var/www/html/wp-content/themes
+      - ./wp-content/plugins:/var/www/html/wp-content/plugins
+      - ./wp-content/uploads:/var/www/html/wp-content/uploads
+    # ports:
+    #   - "8000:80"
     restart: unless-stopped
     environment:
-      WP_ENV: "local"
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wp_user
       WORDPRESS_DB_PASSWORD: wp_pass
       WORDPRESS_DB_NAME: wp_wordpress
 
+  caddy:
+    container_name: caddy
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - wordpress:/var/www/html  # share WordPress files
+
 volumes:
-    database:
-    wordpress:
+  database:
+  wordpress:
+  caddy_data:
+  caddy_config:
