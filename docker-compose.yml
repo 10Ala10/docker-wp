@@ -37,6 +37,9 @@ services:
       WORDPRESS_DB_USER: wp_user
       WORDPRESS_DB_PASSWORD: wp_pass
       WORDPRESS_DB_NAME: wp_wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME','https://wp.lazybrains.pro');
+        define('WP_SITEURL','https://wp.lazybrains.pro');
 
   caddy:
     container_name: caddy

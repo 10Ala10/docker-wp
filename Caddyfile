@@ -1,3 +1,3 @@
-localhost
+wp.lazybrains.pro
 
 reverse_proxy wp-site:80
